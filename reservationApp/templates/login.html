@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block pageContent %}
+<style>
+    main {
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(to right, #7F7FD5, #86A8E7, #91EAE4); /* Gradient background */
+    }
+
+    .card {
+        background-color: #ffffff; /* Set card background color to white */
+        border-radius: 20px;
+        box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.1); /* Add subtle shadow */
+        overflow: hidden;
+    }
+
+    .card-header {
+        background-color: #4CAF50; /* Set header background color to green */
+        color: #ffffff; /* Set header text color to white */
+        border-top-left-radius: 20px;
+        border-top-right-radius: 20px;
+        padding: 20px;
+        text-align: center;
+        font-size: 1.5rem;
+    }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    label {
+        font-weight: bold;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+        border: none;
+        border-bottom: 1px solid #cccccc; /* Set input border color */
+        border-radius: 0;
+        padding: 10px;
+        width: 100%;
+        margin-top: 15px;
+        background-color: transparent;
+        transition: border-bottom-color 0.3s ease;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+        outline: none;
+        border-bottom-color: #4CAF50; /* Change border color on focus */
+    }
+
+    button {
+        background-color: #4CAF50; /* Set button background color to green */
+        color: #ffffff; /* Set button text color to white */
+        border: none;
+        border-radius: 20px;
+        padding: 15px 0;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        width: 100%;
+    }
+
+    button:hover {
+        background-color: #45a049; /* Darken button color on hover */
+    }
+
+    .err-msg {
+        color: #ff0000; /* Set error message color to red */
+        margin-top: 10px;
+        text-align: center;
+    }
+</style>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-4 col-md-6 col-sm-8">
+            <div class="card">
+                <div class="card-header">
+                    Login
+                </div>
+                <div class="card-body">
+                    <form id="login-user">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <input type="text" class="form-control" autofocus name="username" id="username" required="required" placeholder="Username">
+                        </div>
+                        <div class="form-group">
+                            <input type="password" class="form-control" name="password" id="password" required="required" placeholder="Password">
+                        </div>
+                        <div class="form-group">
+                            <button>Login</button>
+                        </div>
+                        <div class="err-msg" id="err-msg"></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock pageContent %}
+
+{% block ScriptBlock %}
+<script>
+    $(function() {
+        $('#login-user').submit(function(e) {
+            e.preventDefault();
+            var _this = $(this)
+            $('.err-msg').remove();
+            var el = $('<div>')
+            el.addClass("err-msg")
+            if (_this[0].checkValidity() == false) {
+                el.text("Please fill out all fields.");
+                $('#err-msg').html(el);
+                return false;
+            }
+            $.ajax({
+                headers: {
+                    "X-CSRFToken": '{{csrf_token}}'
+                },
+                url: "{% url 'login-user' %}",
+                data: new FormData($(this)[0]),
+                cache: false,
+                contentType: false,
+                processData: false,
+                method: 'POST',
+                type: 'POST',
+                dataType: 'json',
+                error: function(xhr, status, error) {
+                    el.text("An error occurred.");
+                    $('#err-msg').html(el);
+                },
+                success: function(resp) {
+                    if (typeof resp == 'object' && resp.status == 'success') {
+                        location.href = "{% url 'home-page' %}"
+                    } else if (resp.status == 'failed' && !!resp.msg) {
+                        el.text(resp.msg);
+                        $('#err-msg').html(el);
+                    } else {
+                        el.text("An error occurred.");
+                        $('#err-msg').html(el);
+                        console.error(resp);
+                    }
+                }
+            })
+        })
+    })
+</script>
+{% endblock ScriptBlock %}
